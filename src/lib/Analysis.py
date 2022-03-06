@@ -5,6 +5,9 @@ class Analysis:
     def getCandle(self, pos):
         return self.candles[pos]
 
+    def setCandles(self, candles):
+        self.candles = candles
+
     def mobileAverage(self, period = 7, pos = 0):
         candles = self.candles[pos:(pos + period)]
         sum = 0
