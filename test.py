@@ -8,67 +8,53 @@ def makeDecision(candles, pos):
     print("OK")
 
 api = BinanceAPI()
+dataset = api.getCandles("DOGEUSDT", "1m")
 start = round(time() - (60 * 500)) * 1000
-dataset = api.getCandles("ADAUSDT", "1m", start)
-start = round(((start/1000) - (60 * 500)) * 1000)
-sleep(1)
-dataset = api.getCandles("ADAUSDT", "1m", start) + dataset
-start = round(((start/1000) - (60 * 500)) * 1000)
-sleep(1)
-dataset = api.getCandles("ADAUSDT", "1m", start) + dataset
-start = round(((start/1000) - (60 * 500)) * 1000)
-sleep(1)
-dataset = api.getCandles("ADAUSDT", "1m", start) + dataset
-start = round(((start/1000) - (60 * 500)) * 1000)
-sleep(1)
-dataset = api.getCandles("ADAUSDT", "1m", start) + dataset
-start = round(((start/1000) - (60 * 500)) * 1000)
-sleep(1)
-dataset = api.getCandles("ADAUSDT", "1m", start) + dataset
-start = round(((start/1000) - (60 * 500)) * 1000)
-sleep(1)
-dataset = api.getCandles("ADAUSDT", "1m", start) + dataset
+nbIter = 25
+for i in range(0, nbIter):
+    dataset = api.getCandles("DOGEUSDT", "1m", start) + dataset
+    start = round(((start/1000) - (60 * 500)) * 1000)
+    system("clear")
+    print("download... {}%".format(round((i/nbIter) * 100)))
+    sleep(1)
+
 analysis = Analysis(dataset)
-nbr = len(dataset) - 15
-walletADA = 0
-walletUSDT = 2000
-price = float(dataset[0][4])
-stopLoss = round(price - (price * 0.01), 4)
-takeProfit = round(price + (price * 0.01), 4)
-lastFund = walletUSDT
+period = 14
+walletA = 0
+walletB = 300
+stopLoss = 0
+takeProfit = 0
+risk = 0.125
 win = 0
 loss = 0
-risk = 1
-for i in range(0, nbr):
-    price = float(dataset[i][4])
-    priceLow = float(dataset[i][3])
-    priceHigh = float(dataset[i][2])
-    if analysis.getRSI(14, i) < 30 and walletADA == 0:
-        walletADA = (walletUSDT * risk)/float(dataset[i][4])
-        stopLoss = round(price - (price * 0.005), 4)
-        takeProfit = round(price + (price * 0.01), 4)
-        lastFund = walletUSDT
-        walletUSDT = walletUSDT - (walletUSDT * risk)
-    elif walletADA > 0 and priceHigh >= takeProfit:
-        walletUSDT = walletUSDT + (walletADA * takeProfit)
-        walletADA = 0
-        risk = 1
-        win += 1
-        system("clear")
-        print("{} \033[32m {} USDT\033[39m".format(datetime.fromtimestamp(dataset[i][0]/1000), round(walletUSDT - lastFund, 2)))
-        print("\nWIN RATE => {}%".format(round(win/(loss+win) * 100)))
-        print("NB TRADE => {}".format(win+loss))
-        print("USDT => {}".format(round(walletUSDT, 2)))
-        sleep(1)
-    elif walletADA > 0 and priceLow <= stopLoss:
-        walletUSDT = walletUSDT + (walletADA * stopLoss)
-        walletADA = 0
-        loss += 1
-        if risk < 1:
-            risk = risk * 2
-        system("clear")
-        print("{} \033[31m {} USDT\033[39m".format(datetime.fromtimestamp(dataset[i][0]/1000), round(walletUSDT - lastFund, 2)))
-        print("\nWIN RATE => {}%".format(round(win/(loss+win) * 100)))
-        print("NB TRADE => {}".format(win+loss))
-        print("USDT => {}".format(round(walletUSDT, 2)))
-        sleep(1)
+for i in range(period, len(dataset)):
+    rsi = analysis.getRSI(period, i)
+    ma99 = analysis.mobileAverage(99, i)
+    if rsi < 30 and walletA == 0:
+        price = float(dataset[i][1])
+        walletA = (walletB * risk) / price
+        walletB = walletB - (walletB * risk)
+        stopLoss = price - (price * 0.005)
+        takeProfit = price + (price * 0.006)
+        print(datetime.fromtimestamp(int(dataset[i][0])/1000))
+
+    if walletA > 0:
+        if takeProfit <= float(dataset[i][2]):
+            walletB = walletB + (walletA * takeProfit)
+            walletA = 0
+            print("\033[32mWIN\033[39m")
+            risk = 0.125
+            win += 1
+        elif stopLoss >= float(dataset[i][3]):
+            walletB = walletB + (walletA * stopLoss)
+            loss += 1
+            walletA = 0
+            if (risk < 1):
+                risk = risk * 2
+            print("\033[31mLOSS\033[39m")
+
+print("\n")
+print("TAUX DE REUSSITE = " + str(round((win/(win + loss)) * 100)) + "%")
+print("NOMBRE DE TRADE = " + str(win + loss))
+print("WALLET USDT = " + str(round(walletB + (walletA * float(dataset[len(dataset) -1][1])), 2)))
+print(datetime.fromtimestamp(int(dataset[0][0])/1000))

@@ -31,9 +31,9 @@ class BinanceAPI:
                 return account
         return 0
 
-    def createOrder(self, side, size):
+    def createOrder(self, side, size, symbol = "CHZUSDT"):
         url = self.url + "/order?"
-        sign = "timestamp=" + str(round(time() * 1000)) + "&symbol=ADAUSDT&type=market&side=" + side
+        sign = "timestamp=" + str(round(time() * 1000)) + "&symbol=" + symbol + "&type=market&side=" + side
         if (side == "buy"):
             sign = sign + "&quoteOrderQty="+ str(round(size - 1))
         else:
@@ -42,5 +42,5 @@ class BinanceAPI:
         url = url+sign+"&signature="+h
         return requests.post(url, headers={"X-MBX-APIKEY": self.config["key"]}).json()
 
-    def ticker(self, symbol = "ADAUSDT"):
+    def ticker(self, symbol = "CHZUSDT"):
         return requests.get(self.url + "/ticker/price?symbol="+symbol).json()
