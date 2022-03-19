@@ -16,18 +16,14 @@ def simulation(dataset, walletA, walletB):
     support = analysis1M.getSupport()
     for i in range(25, len(dataset)):
         price = float(dataset[i][1])
-        rsi = analysis1M.getRSI(8, i)
         if i > 50 and walletA == 0:
-            ma7 = analysis1M.mobileAverage(7, i)
-            ma25 = analysis1M.mobileAverage(25, i)
-            if (ma7 > price and ma25 < price):
-                for s in range(1, len(support) - 1):
-                    if (float(dataset[i][4]) > support[s] and float(dataset[i - 1][1]) < support[s]):
-                        walletA = (walletB * risk) / price
-                        walletB = walletB - (walletB * risk)
-                        stopLoss = price - (price * 0.01)
-                        takeProfit = price + (price * 0.01)
-                        break
+            for s in range(1, len(support) - 1):
+                if (float(dataset[i][4]) > support[s] and float(dataset[i - 1][1]) < support[s]):
+                    walletA = (walletB * risk) / price
+                    walletB = walletB - (walletB * risk)
+                    stopLoss = price - (price * 0.01)
+                    takeProfit = price + (price * 0.01)
+                    break
 
         if walletA > 0:
             if takeProfit <= float(dataset[i][2]):

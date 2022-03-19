@@ -14,7 +14,7 @@ from src.simulations.simulationV2 import simulation
 #api = BinanceAPI()
 candles = json.loads(open("dataset1M.json", "r").read())
 walletA = 0
-walletB = 1400
+walletB = 100
 i = 0
 win = 0
 loss = 0

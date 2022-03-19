@@ -31,10 +31,7 @@ class Bot:
                     candlesM1 = self.api.getCandles(self.symbol, "1m")
                     analysisM1.setCandles(candlesM1)
                     support = analysisM1.getSupport()
-                    ma7 = analysisM1.mobileAverage(7, len(candlesM1) - 1)
-                    ma25 = analysisM1.mobileAverage(25, len(candlesM1) - 1)
-                    if (ma7 > price and ma25 < price):
-                        self.makeDecision(price, self.priceAction(support, candlesM1))
+                    self.makeDecision(price, self.priceAction(support, candlesM1))
             except:
                 print("Connexion Lost")
                 sleep(1)
