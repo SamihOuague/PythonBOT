@@ -44,7 +44,7 @@ class Analysis:
             support.append((price, nbr))
         zone = []
         for i in range(0, len(support)):
-            if (support[i][1] > 30 and support[i][1] < 40):
+            if (support[i][1] > 10 and support[i][1] < 50):
                 current = round(support[i][0]*10000)   
                 zone.append(current/10000)
         arrTmp = []
