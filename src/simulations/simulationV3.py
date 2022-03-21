@@ -3,8 +3,8 @@ from src.lib.Analysis import Analysis
 
 def simulation(dataset, walletA, walletB):
     analysis1M = Analysis(dataset)
-    walletA = walletA
-    walletB = walletB
+    walletUSDT = walletA
+    walletCHZ = walletB
     stopLoss = 0
     takeProfit = 0
     risk = 1
@@ -13,22 +13,23 @@ def simulation(dataset, walletA, walletB):
     msg = ""
     lossRate = 0
     winRate = 0
-    support = analysis1M.getSupport()[0:3]
+    support = analysis1M.getSupport()[::-1][0:3]
     for i in range(25, len(dataset)):
         price = float(dataset[i][1])
-        if i > 50 and walletA == 0:
+        if i > 50 and walletUSDT == 0:
             for s in range(1, len(support) - 1):
-                if (float(dataset[i][4]) > support[s] and float(dataset[i - 1][1]) < support[s]):
-                    walletA = (walletB * risk) / price
-                    walletB = walletB - (walletB * risk)
-                    stopLoss = price - (price * 0.01)
-                    takeProfit = price + (price * 0.02)
+                if (float(dataset[i][4]) < support[s] and float(dataset[i - 1][1]) > support[s]):
+                    walletUSDT = walletCHZ * price
+                    walletCHZ = 0
+                    stopLoss = price + (price * 0.01)
+                    takeProfit = price - (price * 0.02)
                     break
 
-        if walletA > 0:
-            if takeProfit <= float(dataset[i][2]):
-                walletB = walletB + (walletA * takeProfit)
-                walletA = 0
+        if walletUSDT > 0:
+            if takeProfit >= float(dataset[i][2]):
+                
+                walletCHZ = walletUSDT / takeProfit
+                walletUSDT = 0
                 win += 1
                 #system("clear")
                 print(datetime.fromtimestamp(int(dataset[i][0])/1000))
@@ -36,10 +37,10 @@ def simulation(dataset, walletA, walletB):
                 #sleep(1)
                 winRate += 1
                 risk = 1
-            elif stopLoss >= float(dataset[i][3]):
-                walletB = walletB + (walletA * stopLoss)
+            elif stopLoss <= float(dataset[i][3]):
+                walletCHZ = walletUSDT / stopLoss
+                walletUSDT = 0
                 loss += 1
-                walletA = 0
                 #print(msg)
                 #system("clear")
                 print(datetime.fromtimestamp(int(dataset[i][0])/1000))
@@ -53,4 +54,4 @@ def simulation(dataset, walletA, walletB):
     #print("NOMBRE DE TRADE = " + str(win + loss))
     #print(str(round(walletB + (walletA * float(dataset[len(dataset) - 1][1])), 2)) + " USDT")
     #print("END")
-    return [walletA, walletB, winRate, lossRate]
+    return [round(walletUSDT, 2), round(walletCHZ, 2), winRate, lossRate]
