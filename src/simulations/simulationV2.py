@@ -1,5 +1,6 @@
 from datetime import datetime
 from src.lib.Analysis import Analysis
+import json
 
 def simulation(dataset, walletA, walletB):
     analysis1M = Analysis(dataset)
@@ -22,9 +23,9 @@ def simulation(dataset, walletA, walletB):
                     walletA = (walletB * risk) / price
                     walletB = walletB - (walletB * risk)
                     stopLoss = price - (price * 0.01)
-                    takeProfit = price + (price * 0.02)
+                    takeProfit = price + (price * 0.01)
+                    print("BUY {}".format(price))
                     break
-
         if walletA > 0:
             if takeProfit <= float(dataset[i][2]):
                 walletB = walletB + (walletA * takeProfit)
@@ -32,7 +33,7 @@ def simulation(dataset, walletA, walletB):
                 win += 1
                 #system("clear")
                 print(datetime.fromtimestamp(int(dataset[i][0])/1000))
-                print(msg, "\033[32mWIN\033[39m")
+                print(msg, "\033[32mWIN\033[39m", price)
                 #sleep(1)
                 winRate += 1
                 risk = 1
@@ -43,7 +44,7 @@ def simulation(dataset, walletA, walletB):
                 #print(msg)
                 #system("clear")
                 print(datetime.fromtimestamp(int(dataset[i][0])/1000))
-                print(msg, "\033[31mLOSS\033[39m")
+                print(msg, "\033[31mLOSS\033[39m", price)
                 #sleep(1)
                 lossRate += 1
                 if (risk < 1):

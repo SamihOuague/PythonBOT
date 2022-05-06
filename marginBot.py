@@ -14,7 +14,7 @@ class Bot:
         price = float(self.api.ticker(self.symbol)["price"])
         sleep(1)
         self.stopLoss = round(price + (price * 0.01), 4)
-        self.takeProfit = round(price - (price * 0.02), 4)
+        self.takeProfit = round(price - (price * 0.01), 4)
         self.risk = 1
         self.lastFund = round(self.walletB, 2)
         self.logs = []
@@ -26,7 +26,7 @@ class Bot:
         while True:
             try:
                 price = float(self.api.ticker(self.symbol)["price"])
-                if round(time() * 1000) > (int(candlesM1[499][0]) + 60000):
+                if round(time() * 1000) > (int(candlesM1[499][0]) + 60000) and self.walletB > 10:
                     candlesM1 = self.api.getCandles(self.symbol, "1m")
                     analysisM1.setCandles(candlesM1)
                     support = analysisM1.getSupport()[::-1][0:3]
@@ -37,10 +37,10 @@ class Bot:
                 continue
             self.makeDecision(price, False)
             system("clear")
-            print("CHZ = {}\nPRICE = {}\nRISK RATIO = {}".format(round(self.walletA + (self.walletB / price), 2), price, self.risk))
+            print("USDT = {}\nPRICE = {}".format(round(self.walletB + (self.walletA * price), 2), price))
             print(support)
             print(datetime.fromtimestamp(int(candlesM1[len(candlesM1) - 1][0])/1000))
-            if (self.walletB > 10):
+            if (self.walletA > 10):
                 print("TAKE PROFIT = {}\nSTOP LOSS = {}".format(self.takeProfit, self.stopLoss))
             for log in self.logs:
                 print(log)
@@ -49,26 +49,23 @@ class Bot:
     def priceAction(self, support, candles):
         currentPos = len(candles) - 1
         for s in range(1, len(support) - 1):
-            if (float(candles[currentPos][4]) < support[s] and float(candles[currentPos - 1][1]) > support[s]):
+            if (float(candles[currentPos - 1][4]) > support[s] and float(candles[currentPos - 2][1]) < support[s]):
                 return True
         return False
 
     def makeDecision(self, price, letsGo):
-        if (letsGo and self.walletA > 10):
-            self.stopLoss = round(price + (price * 0.01), 4)
-            self.takeProfit = round(price - (price * 0.02), 4)
-            self.sell()
-            self.logs.append("{} \033[33m BUY => {} \033[39m".format(datetime.fromtimestamp(round(time())), str(round(self.walletA, 2))))
+        if (letsGo and self.walletB > 10):
+            self.stopLoss = round(price - (price * 0.01), 4)
+            self.takeProfit = round(price + (price * 0.01), 4)
+            self.buy()
+            self.logs.append("{} \033[33m BUY => {} \033[39m".format(datetime.fromtimestamp(round(time())), str(price)))
         
-        if (price <= self.takeProfit and self.walletB > 10):
-            self.risk = 1
-            self.buy()
-            self.logs.append("{} \033[32m WIN => {} \033[39m".format(datetime.fromtimestamp(round(time())), str(round(self.walletA, 2))))
-        elif (price >= self.stopLoss and self.walletB > 10):
-            if (self.risk < 1):
-                self.risk = self.risk * 2
-            self.buy()
-            self.logs.append("{} \033[31m LOSS => {} \033[39m".format(datetime.fromtimestamp(round(time())), str(round(self.walletA, 2))))
+        if (price >= self.takeProfit and self.walletA > 10):
+            self.sell()
+            self.logs.append("{} \033[32m WIN => {} \033[39m".format(datetime.fromtimestamp(round(time())), str(price)))
+        elif (price <= self.stopLoss and self.walletA > 10):
+            self.sell()
+            self.logs.append("{} \033[31m LOSS => {} \033[39m".format(datetime.fromtimestamp(round(time())), str(price)))
 
     def refreshWallets(self):
         self.walletB = float(self.api.getAccount("USDT", "margin")["free"])
@@ -76,7 +73,7 @@ class Bot:
         self.walletA = float(self.api.getAccount(self.currency, "margin")["free"])
 
     def buy(self):
-        order = self.api.createMarginOrder("BUY", self.walletB * self.risk, self.symbol)
+        order = self.api.createMarginOrder("BUY", self.walletB, self.symbol)
         self.refreshWallets()
         return order
     

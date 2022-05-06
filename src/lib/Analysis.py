@@ -23,61 +23,21 @@ class Analysis:
 
     def getSupport(self):
         dataset1M = self.candles
-        bottom = float(dataset1M[0][3])
-        top = float(dataset1M[0][2])
-        for i in range(0, len(dataset1M)):
-            if (float(dataset1M[i][3]) < bottom):
-                bottom = float(dataset1M[i][3])
-            elif (float(dataset1M[i][2]) > top):
-                top = float(dataset1M[i][2])
-        if bottom < top:
-            index = range(round(bottom * 10000), round(top * 10000))
-        else:
-            index = range(round(top * 10000), round(bottom * 10000))
-        support = []
-        for i in index:
-            price = i/10000
-            nbr = 0
-            for c in dataset1M:
-                if price <= float(c[2]) and price >= float(c[3]):
-                    nbr += 1
-            support.append((price, nbr))
-        zone = []
-        for i in range(0, len(support)):
-            if (support[i][1] > 10 and support[i][1] < 50):
-                current = round(support[i][0]*10000)   
-                zone.append(current/10000)
-        arrTmp = []
-        nZone = []
-        for i in range(0, len(zone)):
-            if not round(zone[i], 3) in arrTmp:
-                arrTmp.append(round(zone[i], 3))
-                nZone.append(zone[i])
-        return nZone
+        lowz = {}
+        supports = []
+        for c in dataset1M:
+            try:
+                lowz[c[3]] += 1
+            except KeyError:
+                lowz[c[3]] = 1
 
-    def getRSI(self, period = 14, pos = 0):
-        candles = self.candles[(pos - period):pos]
-        avgH = []
-        avgL = []
-        for i in range(1, len(candles)):
-            current = candles[i]
-            prev = candles[i - 1]
-            diff = float(prev[4]) - float(current[4])
-            if diff < 0:
-                avgH.append(-1 * float(diff))
-                avgL.append(0)
-            else:
-                avgL.append(float(diff))
-                avgH.append(0)
-        if (sum(avgH) > 0):
-            avgH = sum(avgH)/len(avgH)
-        else:
-            avgH = 0
-        if (sum(avgL) > 0):
-            avgL = sum(avgL)/len(avgL)
-        else:
-            avgL = 0
-        if avgH == 0 and avgL == 0:
-            return 0
-        return round((avgH/(avgL + avgH)) * 100)
+        for l in lowz:
+            if (lowz[l] > 8):
+                supports.append(l)
+        return supports
+
+    def trendRate(self, period = 14):
+        candles = self.candles
+        diffCandles = [(x[4] * 10000) - (x[1] * 10000) for x in candles[-1 * (period):]]
+        return sum(diffCandles)
     
